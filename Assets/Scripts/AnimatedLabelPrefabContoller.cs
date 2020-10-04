@@ -12,7 +12,6 @@ public class AnimatedLabelPrefabContoller : MonoBehaviour
 
     public void Show(Color color, string text, Vector3 position)
     {
-        Debug.Log("show popup");
         mText.text = text;
         mText.color = color;
         transform.position = position;

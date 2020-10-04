@@ -11,15 +11,15 @@ public class ProgressManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-        ProgressDictionary.Add(1, (0, 10));
-        ProgressDictionary.Add(2, (10, 50));
-        ProgressDictionary.Add(3, (50, 150));
-        ProgressDictionary.Add(4, (150, 500));
-        ProgressDictionary.Add(5, (500, 1000));
-        ProgressDictionary.Add(6, (1000, 5000));
-        ProgressDictionary.Add(7, (5000, 10000));
-        ProgressDictionary.Add(8, (10000, 20000));
-        ProgressDictionary.Add(9, (20000, 50000));
+        ProgressDictionary.Add(1, (0, 50));
+        ProgressDictionary.Add(2, (50, 250));
+        ProgressDictionary.Add(3, (250, 500));
+        ProgressDictionary.Add(4, (500, 1000));
+        ProgressDictionary.Add(5, (1000, 1500));
+        ProgressDictionary.Add(6, (1500, 2500));
+        ProgressDictionary.Add(7, (2500, 5000));
+        ProgressDictionary.Add(8, (5000, 7500));
+        ProgressDictionary.Add(9, (7500, 10000));
     }
 
 
@@ -54,19 +54,21 @@ public class ProgressManager : MonoBehaviour
     public void CheckScoreAgainstLevel(int score)
     {
         var (min, max) = ProgressDictionary[Level];
+        if (score % 100 == 0 && Random.Range(0f, 1f) >= 0.5f) GameManager.Instance.GenerateShip();
         if (score >= max)
         {
             Level++;
-            LevelLabel.text = $"lvl{Level}";
+            LevelLabel.text = $"lvl {Level}";
             //LevelEffect
             var (_min, _max) = ProgressDictionary[Level];
             ProgressSlider.minValue = _min;
             ProgressSlider.maxValue = _max;
-            ProgressSlider.value = score;
+            ProgressSlider.DOValue(score, 0.5f);
+            CheckUnlocks();
         }
         else
         {
-            ProgressSlider.value = score;
+            ProgressSlider.DOValue(score, 0.5f);
 
         }
 
@@ -79,9 +81,7 @@ public class ProgressManager : MonoBehaviour
             if (skill.unlockLevel == Level)
             {
 
-                //PAUSEGAME
-
-                //TODO Unlock Skill
+                InterfaceManager.Instance.ShowUnlockPanel(skill.ID);
             }
         }
 

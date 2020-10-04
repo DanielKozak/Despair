@@ -1,4 +1,5 @@
 using UnityEngine;
+[System.Serializable]
 public class Skill
 {
     public int ID;
@@ -8,10 +9,10 @@ public class Skill
     public int cooldown;
     public int unlockLevel;
 
-    public Texture2D icon;
+    public Sprite icon;
 
     public string effectsDescr;
 
-    public virtual void ApplyEffects(ShipController target) { }
+    public virtual void ApplyEffects(ShipController target = null) { }
 
 }

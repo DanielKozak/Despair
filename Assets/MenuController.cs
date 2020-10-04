@@ -115,7 +115,7 @@ public class MenuController : MonoBehaviour
         AudioManager.PlaySound("click");
 
         gameObject.SetActive(false);
-        //Tutorial1.SetActive(true);
+        Tutorial1.SetActive(true);
     }
     public void onExitButtonPressed()
     {

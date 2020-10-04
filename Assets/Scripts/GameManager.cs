@@ -202,11 +202,11 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyUp(KeyCode.Space))
+        /*if (Input.GetKeyUp(KeyCode.Space))
             GenerateShip();
         if (Input.GetKeyUp(KeyCode.F2))
             SetRandomPlanet();
-
+            */
     }
 
     public int ShipCount = 0;

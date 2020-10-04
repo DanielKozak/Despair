@@ -117,10 +117,10 @@ public class ShipController : MonoBehaviour
                 //UpdateOrbitalPosition();
                 break;
         }
-        if (Input.GetKeyUp(KeyCode.F1))
+        /*if (Input.GetKeyUp(KeyCode.F1))
         {
             Depart();
-        }
+        }*/
 
     }
 

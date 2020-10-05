@@ -71,6 +71,8 @@ public class ShipController : MonoBehaviour
     public void onGameOver(object sender, System.EventArgs e)
     {
         Depart();
+        GameManager.OnGameOver -= onGameOver;
+
     }
 
     void Start()
@@ -196,8 +198,10 @@ public class ShipController : MonoBehaviour
     }
     public int ShipType;
 
-    public void EndGame()
+    public void CompareShipData()
     {
+        GameManager.Instance.UpdateInformationGathered(Mathf.FloorToInt(Intel * IntelMod));
+
         if (tortureTime > GameManager.Instance.LongestTortureTime)
         {
             GameManager.Instance.LongestTortureTime = tortureTime;
@@ -205,15 +209,9 @@ public class ShipController : MonoBehaviour
             GameManager.Instance.LongestTortureType = ShipType;
 
             PlayerPrefs.SetString("_torturedName", ShipName);
-            PlayerPrefs.GetFloat("_torturedTime", tortureTime);
-            PlayerPrefs.GetInt("_torturedtype", ShipType);
+            PlayerPrefs.SetFloat("_torturedTime", tortureTime);
+            PlayerPrefs.SetInt("_torturedtype", ShipType);
         }
-
-        GameManager.Instance.UpdateInformationGathered(Mathf.FloorToInt(Intel * IntelMod));
-        GameManager.Instance.ShipCount--;
-        if (GameManager.Instance.ShipCount == 0)
-            GameManager.Instance.ExitToMenu();
-
     }
     void UpdateDepartingPosition()
     {
@@ -222,8 +220,11 @@ public class ShipController : MonoBehaviour
             Destroy(myOverlay);
             Destroy(gameObject);
 
-            GameManager.Instance.UpdateInformationGathered(Mathf.FloorToInt(Intel * IntelMod));
+            CompareShipData();
 
+            GameManager.Instance.ShipCount--;
+            if (GameManager.Instance.ShipCount == 0)
+                GameManager.Instance.ExitToMenu();
             return;
         }
         Vector3 dir = this.dir > 0 ? transform.up : -transform.up;
@@ -431,25 +432,24 @@ public class ShipController : MonoBehaviour
     public bool isBoarded = false;
     public IEnumerator PhysicsRoutine(float duration)
     {
-        ShipTask cStatus = CurrentTask;
-        CurrentTask = ShipTask.Frozen;
         isFrozen = true;
         var overlay = myOverlay.GetComponent<ShipUIOverlay>();
-        Debug.Log("Before routine");
+        Debug.Log("Before frozen routine");
         overlay.StartCoroutine(overlay.TimerMaskCoroutine(duration));
         yield return new WaitForSeconds(duration);
-        CurrentTask = cStatus;
+        Debug.Log("after frozen routine");
+
         isFrozen = false;
     }
 
     public IEnumerator InterferenceRoutine(float duration)
     {
 
-        IntelMod *= 0.5f;
+        IntelMod *= 0.1f;
         var overlay = myOverlay.GetComponent<ShipUIOverlay>();
         overlay.StartCoroutine(overlay.TimerMaskCoroutine(duration));
         yield return new WaitForSeconds(duration);
-        IntelMod *= 2f;
+        IntelMod *= 10f;
     }
 
     public IEnumerator PingRoutine()

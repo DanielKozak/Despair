@@ -1,8 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
-using DG.Tweening;
 
 public class MenuController : MonoBehaviour
 {
@@ -15,26 +15,23 @@ public class MenuController : MonoBehaviour
 
     public int TorturedShipType = -1;
 
-
-
-
     public bool hasCompletedTutorial;
     public GameObject Tutorial1;
     public GameObject Tutorial2;
-
 
     public AudioSource Sfx1;
     public AudioSource Sfx2;
     public AudioSource Sfx3;
     public AudioSource music;
 
-
     public Slider SfxSlider;
     public Slider MusicSlider;
 
     public GameObject planet;
+    public GameObject tutPlanet;
+    public Image ship;
 
-    public SpriteRenderer ship;
+    public Button StartButton;
 
 
     Color ScienceShipColor = new Color(1f, 1f, 1f, 1f);
@@ -43,8 +40,22 @@ public class MenuController : MonoBehaviour
     Color PassengerColor = new Color(0f, 0.3f, 1f, 1f);
     private void OnEnable()
     {
-        StartCoroutine(PlanetRoutine());
+        //Vector3 newPos = new Vector3(-16.9f, -2.6f, 0);
+        //planet.transform.position = newPos;
+
+
+        Debug.Log($"loading save data");
+        Debug.Log($"_tutorial {PlayerPrefs.GetInt("_tutorial", 0)}");
+        Debug.Log($"_highscore {PlayerPrefs.GetInt("_highscore", 0)}");
+        Debug.Log($"_torturedName {PlayerPrefs.GetString("_torturedName", "")}");
+        Debug.Log($"_torturedTime {PlayerPrefs.GetFloat("_torturedTime", 0)}");
+        Debug.Log($"_torturedtype {PlayerPrefs.GetInt("_torturedtype", -1)}");
+
         hasCompletedTutorial = PlayerPrefs.GetInt("_tutorial", 0) == 0 ? false : true;
+
+
+        planet.transform.position = Camera.main.ViewportToWorldPoint(new Vector3(0.3f, 0.4f, 10f));
+        tutPlanet.transform.position = Camera.main.ViewportToWorldPoint(new Vector3(0.3f, 0.6f, 10f));
 
         if (!hasCompletedTutorial)
         {
@@ -52,6 +63,8 @@ public class MenuController : MonoBehaviour
             Tutorial1.SetActive(true);
             return;
         }
+        Debug.Log($"loading save data");
+
         HighScoreText.text = PlayerPrefs.GetInt("_highscore", 0).ToString();
         TorturedShipName.text = PlayerPrefs.GetString("_torturedName", "");
         TorturedShipTime.text = PlayerPrefs.GetFloat("_torturedTime", 0).ToString();
@@ -64,37 +77,35 @@ public class MenuController : MonoBehaviour
         SfxSlider.value = Sfx1.volume;
         MusicSlider.value = music.volume;
 
-
         SfxSlider.onValueChanged.AddListener(delegate { onSFXChanged(); });
         MusicSlider.onValueChanged.AddListener(delegate { onMusicChanged(); });
-
 
         switch (TorturedShipType)
         {
             case 0:
-                ship.GetComponentInChildren<SpriteRenderer>().color = ScienceShipColor;
+                ship.color = ScienceShipColor;
 
                 break;
             case 1:
-                ship.GetComponentInChildren<SpriteRenderer>().color = EngineerColor;
+                ship.color = EngineerColor;
 
                 break;
             case 2:
-                ship.GetComponentInChildren<SpriteRenderer>().color = MilitaryColor;
+                ship.color = MilitaryColor;
 
                 break;
             case 3:
-                ship.GetComponentInChildren<SpriteRenderer>().color = PassengerColor;
+                ship.color = PassengerColor;
 
                 break;
         }
-    }
 
-    IEnumerator PlanetRoutine()
-    {
-        yield return null;
-        int x = Random.Range(0, GameManager.Instance.planetList.Count);
-        planet.GetComponent<SpriteRenderer>().sprite = GameManager.Instance.planetList[x];
+        if (GameManager.Instance != null)
+            if (GameManager.Instance.isFromMenu)
+            {
+                StartButton.enabled = false;
+                StartButton.GetComponentInChildren<Text>().text = "Sorry, restart broken";
+            }
     }
 
     private void OnDisable()
@@ -102,7 +113,6 @@ public class MenuController : MonoBehaviour
         SfxSlider.onValueChanged.RemoveAllListeners();
         MusicSlider.onValueChanged.RemoveAllListeners();
     }
-
 
     public void onStartButtonPressed()
     {
@@ -137,6 +147,5 @@ public class MenuController : MonoBehaviour
     {
         PlayerPrefs.SetInt("_tutorial", 1);
     }
-
 
 }

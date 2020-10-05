@@ -66,8 +66,12 @@ public class GameManager : MonoBehaviour
     public int LongestTortureType;
 
 
+    public bool isFromMenu = false;
+
+
     void Start()
     {
+        Debug.Log("BLYAD");
         PopulateSkillList();
 
         //if(PlayerPrefs.HasKey("_highscore"))
@@ -83,10 +87,9 @@ public class GameManager : MonoBehaviour
     public void GenerateShip()
     {
         ShipCount++;
-        int type = Random.Range(0, 3);
+        int type = Random.Range(0, 4);
         float angle = (float)Random.Range(0, 359);
         float radius = (float)Random.Range(8, 15);
-
         GameObject newShip = Instantiate(ShipPrefab, GameRoot.transform);
         newShip.name = RandomName();
         ShipController newShipController = newShip.GetComponent<ShipController>();
@@ -137,10 +140,9 @@ public class GameManager : MonoBehaviour
         }
 
 
-        Debug.Log($"{angle} {radius}");
-
         GameObject newOverlay = Instantiate(OverlayPrefab, OverlayParent.transform);
         newOverlay.GetComponent<ShipUIOverlay>().LinkedShip = newShipController;
+        newOverlay.name = newShipController.ShipName + "_overlay";
 
         newShipController.SetOverlay(newOverlay);
         newShipController.timerCircle = newOverlay.GetComponent<ShipUIOverlay>().TimerMask.gameObject;
@@ -206,7 +208,7 @@ public class GameManager : MonoBehaviour
             GenerateShip();
         if (Input.GetKeyUp(KeyCode.F2))
             SetRandomPlanet();
-            */
+*/
     }
 
     public int ShipCount = 0;
@@ -250,7 +252,20 @@ public class GameManager : MonoBehaviour
 
     public void ExitToMenu()
     {
-        StartCoroutine(GameOver());
+        LogDump.Dump();
+        var ships = GameObject.FindObjectsOfType<ShipController>();
+        foreach (var item in ships)
+        {
+            item.CompareShipData();
+        }
+        isFromMenu = true;
+        CurrentGameState = GameState.Menu;
+        if (ProgressManager.Instance.Score >= HighScore)
+        {
+            PlayerPrefs.SetInt("_highscore", ProgressManager.Instance.Score);
+        }
+        GameRoot.SetActive(false);
+        MenuRoot.SetActive(true);
     }
 
 
@@ -264,14 +279,8 @@ public class GameManager : MonoBehaviour
     public IEnumerator GameOver()
     {
         OnGameOver?.Invoke(this, null);
-        yield return new WaitForSecondsRealtime(5f);
-        if (ProgressManager.Instance.Score >= HighScore)
-        {
-            PlayerPrefs.SetInt("_highscore", ProgressManager.Instance.Score);
-        }
-        CurrentGameState = GameState.Menu;
-        GameRoot.SetActive(false);
-        MenuRoot.SetActive(true);
+        yield return null;
+
     }
 
 }

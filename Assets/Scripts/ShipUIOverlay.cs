@@ -29,7 +29,7 @@ public class ShipUIOverlay : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     void Start()
     {
         //if (GameManager.Instance.inTutorial) return;
-        cam = Camera.main;
+
         ShipNameText.text = LinkedShip.ShipName;
         HealthBar.SetNormalizedValue(100f);
         IntelBar.SetNormalizedValue(0f);
@@ -42,13 +42,13 @@ public class ShipUIOverlay : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     void FixedUpdate()
     {
         transform.position = LinkedShip.transform.position;
-
         //HPSlider.normalizedValue = LinkedShip.HP / 100f;
         //IntelSlider.normalizedValue = LinkedShip.Intel / 100f;
         //DespairSlider.normalizedValue = LinkedShip.Despair / 100f;
         HealthBar.SetNormalizedValue(LinkedShip.HP / 100f);
         IntelBar.SetNormalizedValue(LinkedShip.Intel / 100f);
         DespairBar.SetNormalizedValue(LinkedShip.Despair / 100f);
+        //LogDump.Log($"{LinkedShip.ShipName} ---  color:{Camera.main.WorldToViewportPoint(HealthBar.transform.position)} bg : { Camera.main.WorldToViewportPoint(HealthBar.Bg.transform.position)} mask: { Camera.main.WorldToViewportPoint(HealthBar.Mask.transform.position)}");
     }
 
     public void UpdateTaskText(string text = null)
@@ -63,6 +63,7 @@ public class ShipUIOverlay : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     public void OnPointerEnter(PointerEventData eventData)
     {
         //StartCoroutine(HoverRoutine());
+        Debug.Log($"OnShipHoverEnter {LinkedShip.name} , mode : {InterfaceManager.Instance.CurrentPointerMode}");
         if (InterfaceManager.Instance.CurrentPointerMode == InterfaceManager.PointerMode.Targeting)
         {
             TargetSprite.SetActive(true);
@@ -107,13 +108,16 @@ public class ShipUIOverlay : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     public IEnumerator TimerMaskCoroutine(float time)
     {
-        Debug.Log("TimerMask");
         TimerMask.gameObject.SetActive(true);
-        float fraction = time / 360;
+        float fraction = 360 / time;
+        float normalizedFraction = fraction / 360;
+
+        Debug.Log($"TimerMask duratio {time}, {normalizedFraction} dps");
         while (TimerMask.fillAmount >= 0)
         {
-            TimerMask.fillAmount -= fraction;
+            TimerMask.fillAmount -= normalizedFraction;
             yield return new WaitForSeconds(1f);
+
         }
         TimerMask.fillAmount = 360f;
         TimerMask.gameObject.SetActive(false);

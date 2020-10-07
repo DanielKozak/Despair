@@ -78,7 +78,7 @@ public class ProgressManager : MonoBehaviour
     {
         foreach (var skill in GameManager.Instance.SkillList)
         {
-            if (skill.unlockLevel == Level)
+            if (skill.unlockLevel <= Level)
             {
 
                 InterfaceManager.Instance.ShowUnlockPanel(skill.ID);

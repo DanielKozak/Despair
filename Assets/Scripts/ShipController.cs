@@ -24,7 +24,9 @@ public class ShipController : MonoBehaviour
         set
         {
             _curTask = value;
-            myOverlay.GetComponent<ShipUIOverlay>().UpdateTaskText();
+            if (isStunned) myOverlay.GetComponent<ShipUIOverlay>().UpdateTaskText("Stunned, resting");
+            else myOverlay.GetComponent<ShipUIOverlay>().UpdateTaskText();
+
             taskCounter = 0;
         }
     }
@@ -305,14 +307,15 @@ public class ShipController : MonoBehaviour
 
         if (Intel >= 100)
         {
-            if (HP <= 100) TaskWeights[ShipTask.Scanning] = 0;
-            else
-            {
-                Depart();
+            Depart();
 
-                StopCoroutine(TickResources());
-            }
+            /*  if (HP <= 100) TaskWeights[ShipTask.Scanning] = 0;
+              else
+              {
 
+                  //StopCoroutine(TickResources());
+              }
+              */
             return;
         }
         if (HP <= 0)
@@ -324,15 +327,14 @@ public class ShipController : MonoBehaviour
         if (Despair >= 100)
         {
             isStunned = true;
-            Despair += 50;
-            myOverlay.GetComponent<ShipUIOverlay>().UpdateTaskText("Stunned, resting");
-            StopCoroutine(TickResources());
+
+            //StopCoroutine(TickResources());
             return;
         }
         if (Despair <= 100 && isStunned)
         {
             isStunned = false;
-            StartCoroutine(TickResources());
+            //StartCoroutine(TickResources());
             return;
         }
     }

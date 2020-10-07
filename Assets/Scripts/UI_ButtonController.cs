@@ -80,7 +80,6 @@ public class UI_ButtonController : MonoBehaviour, IPointerEnterHandler, IPointer
     }
 
 
-
     IEnumerator InitRoutine()
     {
         yield return null;
@@ -144,7 +143,7 @@ public class UI_ButtonController : MonoBehaviour, IPointerEnterHandler, IPointer
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        AudioManager.PlaySound("click");
+
 
         switch (currentState)
         {
@@ -157,9 +156,11 @@ public class UI_ButtonController : MonoBehaviour, IPointerEnterHandler, IPointer
 
                 break;
             case ButtonState.Active:
-                Debug.Log("clock button");
                 InterfaceManager.Instance.SelectSkill(skill.ID);
-                SetState(ButtonState.Selected);
+                if (InterfaceManager.Instance.CurrentPointerMode != InterfaceManager.PointerMode.Targeting)
+                {
+                    SetState(ButtonState.Selected);
+                }
                 break;
             case ButtonState.Selected:
                 InterfaceManager.Instance.DeselectSkill();

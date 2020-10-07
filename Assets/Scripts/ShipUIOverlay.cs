@@ -95,6 +95,7 @@ public class ShipUIOverlay : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     }
     public void OnClicked()
     {
+
         //Debug.Log(InterfaceManager.Instance.CurrentPointerMode);
         if (InterfaceManager.Instance.CurrentPointerMode == InterfaceManager.PointerMode.Targeting)
         {
@@ -112,14 +113,14 @@ public class ShipUIOverlay : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         float fraction = 360 / time;
         float normalizedFraction = fraction / 360;
 
-        Debug.Log($"TimerMask duratio {time}, {normalizedFraction} dps");
-        while (TimerMask.fillAmount >= 0)
+        for (float i = 0; i < time; i++)
         {
             TimerMask.fillAmount -= normalizedFraction;
+            float t = Time.realtimeSinceStartup;
             yield return new WaitForSeconds(1f);
 
         }
-        TimerMask.fillAmount = 360f;
+        TimerMask.fillAmount = 1f;
         TimerMask.gameObject.SetActive(false);
     }
 }

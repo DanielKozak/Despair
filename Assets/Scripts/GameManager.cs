@@ -181,7 +181,6 @@ public class GameManager : MonoBehaviour
         StartCoroutine(StartGameRoutine());
         SetRandomPlanet();
         var file = Resources.Load<TextAsset>("shipnames");
-
         NameList = file.text.Split('\n');
         InterfaceManager.Instance.HideUnlockPanel();
         CurrentGameState = GameState.Playing;
@@ -191,6 +190,7 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSeconds(3f);
         GenerateShip();
+
         yield return new WaitForSeconds(10f);
         GenerateShip();
     }
@@ -204,11 +204,11 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        /*if (Input.GetKeyUp(KeyCode.Space))
+        if (Input.GetKeyUp(KeyCode.Space))
             GenerateShip();
         if (Input.GetKeyUp(KeyCode.F2))
-            SetRandomPlanet();
-*/
+            ProgressManager.Instance.Score += 100;
+
     }
 
     public int ShipCount = 0;
@@ -253,11 +253,11 @@ public class GameManager : MonoBehaviour
     public void ExitToMenu()
     {
         LogDump.Dump();
-        var ships = GameObject.FindObjectsOfType<ShipController>();
+        /*var ships = GameObject.FindObjectsOfType<ShipController>();
         foreach (var item in ships)
         {
             item.CompareShipData();
-        }
+        }*/
         isFromMenu = true;
         CurrentGameState = GameState.Menu;
         if (ProgressManager.Instance.Score >= HighScore)

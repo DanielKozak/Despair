@@ -25,7 +25,9 @@ public class InterfaceManager : MonoBehaviour
     public int selectedButtonIndex = -1;
     public void SelectSkill(int skillID)
     {
+        if (CurrentPointerMode != PointerMode.Default) return;
         Debug.Log("Selected skill " + skillID);
+        AudioManager.PlaySound("click");
         if (skillID == 6)
         {
             GameManager.Instance.SkillList[skillID].ApplyEffects();
@@ -37,10 +39,6 @@ public class InterfaceManager : MonoBehaviour
             Cursor.SetCursor(TargetingCursorTexture, Vector2.zero, CursorMode.Auto);
             CurrentSelectedSkill = GameManager.Instance.SkillList[skillID];
         }
-        selectedButtonIndex = skillID;
-        CurrentPointerMode = PointerMode.Targeting;
-        Cursor.SetCursor(TargetingCursorTexture, Vector2.zero, CursorMode.Auto);
-        CurrentSelectedSkill = GameManager.Instance.SkillList[skillID];
     }
 
     public void DeselectSkill()

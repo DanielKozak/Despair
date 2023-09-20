@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
@@ -6,6 +7,11 @@ using UnityEngine.UI;
 
 public class MenuController : MonoBehaviour
 {
+    [SerializeField] private EventChannelGameFlow _eventChannelGameFlow;
+    [SerializeField] private EventChannelAudioMix _eventChannelAudioMix;
+    [SerializeField] private EventChannelAudioControl _eventChannelAudioControl;
+
+    [Space]
     public Text HighScoreText;
     public bool hasTorturedShip;
 
@@ -38,6 +44,8 @@ public class MenuController : MonoBehaviour
     Color EngineerColor = new Color(1f, 0.5f, 0f, 1f);
     Color MilitaryColor = new Color(1f, 0f, 0f, 1f);
     Color PassengerColor = new Color(0f, 0.3f, 1f, 1f);
+
+
     private void OnEnable()
     {
         //Vector3 newPos = new Vector3(-16.9f, -2.6f, 0);
@@ -112,20 +120,22 @@ public class MenuController : MonoBehaviour
     {
         SfxSlider.onValueChanged.RemoveAllListeners();
         MusicSlider.onValueChanged.RemoveAllListeners();
+
     }
 
     public void onStartButtonPressed()
     {
-        gameObject.SetActive(false);
-        GameManager.Instance.StartGame();
+        _eventChannelGameFlow.RaiseOnNewGameStartEvent();
+        StartButton.gameObject.SetActive(false);
+        // _eventChannelAudioControl
         AudioManager.PlaySound("click");
     }
     public void onTutorialButtonPressed()
     {
         AudioManager.PlaySound("click");
 
-        gameObject.SetActive(false);
-        Tutorial1.SetActive(true);
+        // gameObject.SetActive(false);
+        // Tutorial1.SetActive(true);
     }
     public void onExitButtonPressed()
     {

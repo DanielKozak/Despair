@@ -6,6 +6,10 @@ using DG.Tweening;
 
 public class ShipController : MonoBehaviour
 {
+    [SerializeField] EventChannelDespairScoreTick _eventChannelDespairScoreTick;
+    [SerializeField] EventChannelScanInfo _eventChannelScanInfo;
+    [SerializeField] EventChannelGameFlow _eventChannelGameFlow;
+
     public enum Status
     {
         Arriving, Orbiting, Departing, Dead
@@ -30,6 +34,10 @@ public class ShipController : MonoBehaviour
             taskCounter = 0;
         }
     }
+
+
+    public ShipTypeSO TypeData;
+
     float taskCounter = 0;
 
     //GAME PARAMS   
@@ -44,13 +52,6 @@ public class ShipController : MonoBehaviour
     public string ShipName;
 
     public float tortureTime = 0f;
-
-    public float RepairMod = 1f;
-    public float IntelMod = 1f;
-    public float DespairMod = 1f;
-
-    public float FightMod = 1f;
-
 
     public int OrbitalSpeed = 20;
     public float OrbitHeight;
@@ -198,21 +199,20 @@ public class ShipController : MonoBehaviour
         transform.position += l_dir * FTLSpeed * Time.deltaTime;
         FTLSpeed = dist / 0.5f + 2;
     }
-    public int ShipType;
 
     public void CompareShipData()
     {
-        GameManager.Instance.UpdateInformationGathered(Mathf.FloorToInt(Intel * IntelMod));
+        _eventChannelScanInfo.RaiseOnScanInfoLevelChangedEvent(Mathf.FloorToInt(Intel * TypeData.IntelMod));
 
         if (tortureTime > GameManager.Instance.LongestTortureTime)
         {
             GameManager.Instance.LongestTortureTime = tortureTime;
             GameManager.Instance.LongestTortureName = ShipName;
-            GameManager.Instance.LongestTortureType = ShipType;
+            GameManager.Instance.LongestTortureType = (int)TypeData.typeID;
 
             PlayerPrefs.SetString("_torturedName", ShipName);
             PlayerPrefs.SetFloat("_torturedTime", tortureTime);
-            PlayerPrefs.SetInt("_torturedtype", ShipType);
+            PlayerPrefs.SetInt("_torturedtype", (int)TypeData.typeID);
         }
     }
     void UpdateDepartingPosition()
@@ -226,7 +226,7 @@ public class ShipController : MonoBehaviour
 
             GameManager.Instance.ShipCount--;
             if (GameManager.Instance.ShipCount == 0)
-                GameManager.Instance.ExitToMenu();
+                Debug.LogError("GameOver");
             return;
         }
         Vector3 dir = this.dir > 0 ? transform.up : -transform.up;
@@ -349,7 +349,7 @@ public class ShipController : MonoBehaviour
             switch (CurrentTask)
             {
                 case ShipTask.Scanning:
-                    Intel += 1 * IntelMod;
+                    Intel += 1 * TypeData.IntelMod;
                     if (Intel >= 100)
                     {
                         Depart();
@@ -369,13 +369,13 @@ public class ShipController : MonoBehaviour
 
                     break;
                 case ShipTask.Repairs:
-                    HP += 1 * RepairMod;
+                    HP += 1 * TypeData.RepairMod;
 
                     break;
                 case ShipTask.Fighting:
                     if (enemyHP > 0)
                     {
-                        float x = Random.Range(1, 3) * FightMod;
+                        float x = Random.Range(1, 3) * TypeData.FightMod;
                         HP -= x;
                         enemyHP -= x;
                     }
@@ -387,16 +387,16 @@ public class ShipController : MonoBehaviour
 
                     break;
                 case ShipTask.Resting:
-                    Despair -= (2 * DespairMod);
+                    Despair -= (2 * TypeData.DespairMod);
                     break;
             }
-            Despair -= (Random.Range(-2, +2) * DespairMod);
+            Despair -= (Random.Range(-2, +2) * TypeData.DespairMod);
             if (Despair < 0) Despair = 0;
             int deltaScore = Mathf.FloorToInt(Despair / 10f);
             if (deltaScore > 0)
             {
-                ProgressManager.Instance.Score += deltaScore;
-                InterfaceManager.Instance.ShowAnimatedLabel(GameManager.Instance.DespairColor, $"+{deltaScore}", transform.position);
+                _eventChannelDespairScoreTick.RaiseOnDespairTickEventEvent(deltaScore);
+                InterfaceManager.Instance.ShowAnimatedLabel(GameManager.Instance.DespairColor, $"+{deltaScore}", transform.position); //TODO: mvoe to events
             }
 
             yield return new WaitForSeconds(1f);
@@ -447,11 +447,11 @@ public class ShipController : MonoBehaviour
     public IEnumerator InterferenceRoutine(float duration)
     {
 
-        IntelMod *= 0.1f;
+        TypeData.IntelMod *= 0.1f;
         var overlay = myOverlay.GetComponent<ShipUIOverlay>();
         overlay.StartCoroutine(overlay.TimerMaskCoroutine(duration));
         yield return new WaitForSeconds(duration);
-        IntelMod *= 10f;
+        TypeData.IntelMod *= 10f;
     }
 
     public IEnumerator PingRoutine()

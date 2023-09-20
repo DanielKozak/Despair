@@ -1,16 +1,18 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using DG.Tweening;
 
 public class ProgressManager : MonoBehaviour
 {
 
-    public static ProgressManager Instance;
+    [SerializeField] EventChannelDespairScoreTick _eventChannelDespairScoreTick;
+    [SerializeField] EventChannelLevelUp _eventChannelLevelUp;
+    [SerializeField] EventChannelAbilities _eventChannelAbilities;
+
     private void Awake()
     {
-        Instance = this;
         ProgressDictionary.Add(1, (0, 50));
         ProgressDictionary.Add(2, (50, 250));
         ProgressDictionary.Add(3, (250, 500));
@@ -22,69 +24,68 @@ public class ProgressManager : MonoBehaviour
         ProgressDictionary.Add(9, (7500, 10000));
     }
 
-
-    public Slider ProgressSlider;
-
-    public string progressTextTail;
-    public Text ProgressLabel;
-    public Text LevelLabel;
-
-    public Dictionary<int, (int, int)> ProgressDictionary = new Dictionary<int, (int, int)>();
-
-    private int _score;
-
-    public int Score
+    void OnEnable()
     {
-        get { return _score; }
-        set
-        {
-            _score = value;
-            //Slider effect
-            //textEffect
+        _eventChannelDespairScoreTick.OnDespairTickEvent += CallBack_OnDespairTickEvent;
 
-            CheckScoreAgainstLevel(_score);
-            var (min, max) = ProgressDictionary[Level];
-            ProgressLabel.text = $"{_score}/{max}";
-        }
     }
 
-    public int Level = 1;
 
-    bool lvlUp = false;
+
+    void OnDisable()
+    {
+        _eventChannelDespairScoreTick.OnDespairTickEvent -= CallBack_OnDespairTickEvent;
+
+    }
+
+
+    [SerializeField] Slider ProgressSlider;
+
+    [SerializeField] string progressTextTail;
+    [SerializeField] TMP_Text CurrentProgressLabel;
+    [SerializeField] TMP_Text MaxProgressLabel;
+    [SerializeField] TMP_Text MinProgressLabel;
+    [SerializeField] TMP_Text LevelLabel;
+
+    Dictionary<int, (int, int)> ProgressDictionary = new Dictionary<int, (int, int)>();
+
+    private int _score = 0;
+
+
+    int Level = 1;
+    private void CallBack_OnDespairTickEvent(int arg0)
+    {
+        _score += arg0;
+        CheckScoreAgainstLevel(_score);
+    }
     public void CheckScoreAgainstLevel(int score)
     {
         var (min, max) = ProgressDictionary[Level];
-        if (score % 100 == 0 && Random.Range(0f, 1f) >= 0.5f) GameManager.Instance.GenerateShip();
+        // if (score % 100 == 0 && Random.Range(0f, 1f) >= 0.5f) GameManager.Instance.GenerateShip();
         if (score >= max)
         {
-            Level++;
-            LevelLabel.text = $"lvl {Level}";
-            //LevelEffect
-            var (_min, _max) = ProgressDictionary[Level];
-            ProgressSlider.minValue = _min;
-            ProgressSlider.maxValue = _max;
-            ProgressSlider.DOValue(score, 0.5f);
-            CheckUnlocks();
+            LevelUP();
+
         }
         else
         {
             ProgressSlider.DOValue(score, 0.5f);
-
         }
 
     }
 
-    public void CheckUnlocks()
+    public void LevelUP()
     {
-        foreach (var skill in GameManager.Instance.SkillList)
-        {
-            if (skill.unlockLevel <= Level)
-            {
+        Level++;
+        LevelLabel.text = $"lvl {Level}";
+        var (_min, _max) = ProgressDictionary[Level];
+        ProgressSlider.minValue = _min;
+        MinProgressLabel.text = $"{_min}";
+        MaxProgressLabel.text = $"{_max}";
+        ProgressSlider.maxValue = _max;
+        ProgressSlider.DOValue(_score, 0.5f);
 
-                InterfaceManager.Instance.ShowUnlockPanel(skill.ID);
-            }
-        }
-
+        _eventChannelLevelUp.RaiseOnLevelUpEvent(Level);
     }
 
 }

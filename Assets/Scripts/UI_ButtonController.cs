@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 using UnityEngine.EventSystems;
+using System;
 
 public class UI_ButtonController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
@@ -14,13 +15,12 @@ public class UI_ButtonController : MonoBehaviour, IPointerEnterHandler, IPointer
 
     public ButtonState currentState = ButtonState.Locked;
 
-    public Image bg;
-    public Image frame_active;
-    public Image frame_selected;
-    public Image overlay_locked;
-    public Image overlay_masked;
-    public Image mask;
-    public Text cd_text;
+    [SerializeField] Image bg;
+    [SerializeField] Image frame_active;
+    [SerializeField] Image frame_selected;
+    [SerializeField] Image overlay_locked;
+    [SerializeField] Image overlay_masked;
+    [SerializeField] Text cd_text;
 
     static GameObject ToolTip;
 
@@ -29,9 +29,16 @@ public class UI_ButtonController : MonoBehaviour, IPointerEnterHandler, IPointer
 
 
     public float hoverCd = 2;
+
     void Start()
     {
-        StartCoroutine(InitRoutine());
+        GetComponent<Button>().onClick.AddListener(() => TestCooldown());
+    }
+    public void Init()
+    {
+        skill = GameManager.Instance.SkillList[skillID];
+        SetState(ButtonState.Locked);
+        if (skill.ID == 0) UnlockSkill();
     }
 
     public void SetState(ButtonState newState)
@@ -58,7 +65,7 @@ public class UI_ButtonController : MonoBehaviour, IPointerEnterHandler, IPointer
 
                 break;
             case ButtonState.Active:
-                Debug.Log("VOT TI GDE PIDAR");
+                // Debug.Log("VOT TI GDE PIDAR");
 
                 frame_active.gameObject.SetActive(true);
                 overlay_locked.gameObject.SetActive(false);
@@ -80,13 +87,7 @@ public class UI_ButtonController : MonoBehaviour, IPointerEnterHandler, IPointer
     }
 
 
-    IEnumerator InitRoutine()
-    {
-        yield return null;
-        skill = GameManager.Instance.SkillList[skillID];
-        SetState(ButtonState.Locked);
-        if (skill.ID == 0) UnlockSkill();
-    }
+
     IEnumerator CooldownRoutine()
     {
 
@@ -144,33 +145,43 @@ public class UI_ButtonController : MonoBehaviour, IPointerEnterHandler, IPointer
     public void OnPointerClick(PointerEventData eventData)
     {
 
-
-        switch (currentState)
-        {
-            case ButtonState.Locked:
-                //overlay_locked.DOColor(Color.red, 0.5f).SetLoops(1, LoopType.Yoyo).SetEase(Ease.Linear);
-
-                break;
-            case ButtonState.CoolDown:
-                //overlay_locked.DOColor(Color.red, 0.5f).SetLoops(1, LoopType.Yoyo).SetEase(Ease.Linear);
-
-                break;
-            case ButtonState.Active:
-                InterfaceManager.Instance.SelectSkill(skill.ID);
-                if (InterfaceManager.Instance.CurrentPointerMode != InterfaceManager.PointerMode.Targeting)
+        TestCooldown();
+        Debug.Log("Test cooldown");
+        /*
+                switch (currentState)
                 {
-                    SetState(ButtonState.Selected);
-                }
-                break;
-            case ButtonState.Selected:
-                InterfaceManager.Instance.DeselectSkill();
-                SetState(ButtonState.Active);
-                break;
-        }
+                    case ButtonState.Locked:
+                        //overlay_locked.DOColor(Color.red, 0.5f).SetLoops(1, LoopType.Yoyo).SetEase(Ease.Linear);
+
+                        break;
+                    case ButtonState.CoolDown:
+                        //overlay_locked.DOColor(Color.red, 0.5f).SetLoops(1, LoopType.Yoyo).SetEase(Ease.Linear);
+
+                        break;
+                    case ButtonState.Active:
+                        InterfaceManager.Instance.SelectSkill(skill.ID);
+                        if (InterfaceManager.Instance.CurrentPointerMode != InterfaceManager.PointerMode.Targeting)
+                        {
+                            SetState(ButtonState.Selected);
+                        }
+                        break;
+                    case ButtonState.Selected:
+                        InterfaceManager.Instance.DeselectSkill();
+                        SetState(ButtonState.Active);
+                        break;
+                }*/
     }
+
+    private void TestCooldown()
+    {
+        overlay_masked.fillAmount = 1;
+        overlay_masked.DOFillAmount(0f, 5f).SetEase(Ease.Linear);
+    }
+
     static bool tooltipShown = false;
     bool isPointerInSkill = false;
 
+    Tween showToolTipTween;
     public void OnPointerExit(PointerEventData eventData)
     {
         isPointerInSkill = false;
@@ -180,8 +191,9 @@ public class UI_ButtonController : MonoBehaviour, IPointerEnterHandler, IPointer
 
     }
 
-    void IPointerEnterHandler.OnPointerEnter(PointerEventData eventData)
+    public void OnPointerEnter(PointerEventData eventData)
     {
+
         isPointerInSkill = true;
         Debug.Log($"OPEn ---> {skill.Name}");
         if (!tooltipShown)

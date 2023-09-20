@@ -4,15 +4,16 @@ using UnityEngine;
 
 public class PlanetRotator : MonoBehaviour
 {
-    public float rotSpeed;
+    public bool useScaledDeltaTime = true;
+    float rotSpeed;
     private void Start()
     {
         rotSpeed = Random.Range(-3f, 3f);
     }
     void Update()
     {
-        //float angle = transform.rotation.eulerAngles.z;
-        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z + (rotSpeed * Time.deltaTime));
-        //transform.Rotate(Vector3.forward, angle + (rotSpeed * Time.deltaTime));
+        float time = useScaledDeltaTime ? Time.deltaTime : Time.unscaledDeltaTime;
+        transform.Rotate(Vector3.forward, rotSpeed * time);
+        // transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z + (rotSpeed * Time.deltaTime));
     }
 }

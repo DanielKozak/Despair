@@ -79,68 +79,66 @@ public class InterfaceManager : MonoBehaviour
     public Text InformationLabel;
     public GameObject UnlockPanel;
 
-    public void ShowUnlockPanel(int SkillId)
-    {
+    // public void ShowUnlockPanel(int SkillId)
+    // {
 
-        UnlockPanel.SetActive(true);
-        GameManager.Instance.CurrentGameState = GameManager.GameState.Paused;
+    //     UnlockPanel.SetActive(true);
 
-        var images = UnlockPanel.GetComponentsInChildren<Image>();
-        var texts = UnlockPanel.GetComponentsInChildren<Text>();
-        foreach (var item in images)
-        {
+    //     var images = UnlockPanel.GetComponentsInChildren<Image>();
+    //     var texts = UnlockPanel.GetComponentsInChildren<Text>();
+    //     foreach (var item in images)
+    //     {
 
 
-            switch (item.gameObject.name)
-            {
-                case "UnlockPanel":
-                    item.DOFade(0.3f, 0.5f).SetUpdate(true);
-                    break;
-                case "Image":
-                    item.DOFade(1f, 0.5f).SetUpdate(true);
-                    item.sprite = GameManager.Instance.SkillList[SkillId].icon;
-                    break;
-                default:
+    //         switch (item.gameObject.name)
+    //         {
+    //             case "UnlockPanel":
+    //                 item.DOFade(0.3f, 0.5f).SetUpdate(true);
+    //                 break;
+    //             case "Image":
+    //                 item.DOFade(1f, 0.5f).SetUpdate(true);
+    //                 item.sprite = GameManager.Instance.SkillList[SkillId].icon;
+    //                 break;
+    //             default:
 
-                    item.DOFade(1f, 0.5f).SetUpdate(true);
-                    break;
-            }
-        }
-        foreach (var item in texts)
-        {
-            item.DOFade(1f, 0.5f).SetUpdate(true);
-            switch (item.gameObject.name)
-            {
-                case "SkillNameText":
-                    item.text = GameManager.Instance.SkillList[SkillId].Name;
-                    break;
-                case "DescrText":
-                    item.text = GameManager.Instance.SkillList[SkillId].Descr;
-                    break;
-                case "EffectText":
-                    item.text = GameManager.Instance.SkillList[SkillId].effectsDescr;
-                    break;
-            }
-        }
-        LeftButtons[SkillId].UnlockSkill();
-    }
+    //                 item.DOFade(1f, 0.5f).SetUpdate(true);
+    //                 break;
+    //         }
+    //     }
+    //     foreach (var item in texts)
+    //     {
+    //         item.DOFade(1f, 0.5f).SetUpdate(true);
+    //         switch (item.gameObject.name)
+    //         {
+    //             case "SkillNameText":
+    //                 item.text = GameManager.Instance.SkillList[SkillId].Name;
+    //                 break;
+    //             case "DescrText":
+    //                 item.text = GameManager.Instance.SkillList[SkillId].Descr;
+    //                 break;
+    //             case "EffectText":
+    //                 item.text = GameManager.Instance.SkillList[SkillId].effectsDescr;
+    //                 break;
+    //         }
+    //     }
+    //     LeftButtons[SkillId].UnlockSkill();
+    // }
 
-    public void HideUnlockPanel()
-    {
-        AudioManager.PlaySound("click");
+    // public void HideUnlockPanel()
+    // {
+    //     AudioManager.PlaySound("click");
 
-        var images = UnlockPanel.GetComponentsInChildren<Image>();
-        var texts = UnlockPanel.GetComponentsInChildren<Text>();
-        foreach (var item in images)
-        {
-            item.DOFade(0f, 0.5f);
-        }
-        foreach (var item in texts)
-        {
-            item.DOFade(0f, 0.5f);
-        }
-        UnlockPanel.SetActive(false);
-        GameManager.Instance.CurrentGameState = GameManager.GameState.Playing;
+    //     var images = UnlockPanel.GetComponentsInChildren<Image>();
+    //     var texts = UnlockPanel.GetComponentsInChildren<Text>();
+    //     foreach (var item in images)
+    //     {
+    //         item.DOFade(0f, 0.5f);
+    //     }
+    //     foreach (var item in texts)
+    //     {
+    //         item.DOFade(0f, 0.5f);
+    //     }
+    //     UnlockPanel.SetActive(false);
 
-    }
+    // }
 }

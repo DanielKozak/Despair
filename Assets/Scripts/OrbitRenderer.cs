@@ -6,15 +6,14 @@ using DG.Tweening;
 [RequireComponent(typeof(LineRenderer))]
 public class OrbitRenderer : MonoBehaviour
 {
-    public int precision = 720;
+    [SerializeField] int precision = 360;
 
     LineRenderer orbitLine;
-    // Start is called before the first frame update
     public void Show(float radius)
     {
         Color s = new Color(0, 0.4f, 1, 0);
         Color f = new Color(0, 0.4f, 1, 1);
-        orbitLine = GetComponent<LineRenderer>();
+        orbitLine ??= GetComponent<LineRenderer>();
         var points = GetPoints(radius, precision);
         orbitLine.positionCount = points.Length;
         orbitLine.SetPositions(points);

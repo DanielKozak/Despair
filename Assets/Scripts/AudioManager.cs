@@ -29,23 +29,22 @@ public class AudioManager : MonoBehaviour
     {
 
         DOTween.Init();
-        SFXChannel = GameObject.Find("SFXChannel").GetComponent<AudioSource>();
-        SFX2Channel = GameObject.Find("SFX2Channel").GetComponent<AudioSource>();
-        SFX3Channel = GameObject.Find("SFX3Channel").GetComponent<AudioSource>();
-        MusicChannel = GameObject.Find("MusicChannel").GetComponent<AudioSource>();
+        SFXChannel = transform.Find("SFXChannel").GetComponent<AudioSource>();
+        SFX2Channel = transform.Find("SFX2Channel").GetComponent<AudioSource>();
+        SFX3Channel = transform.Find("SFX3Channel").GetComponent<AudioSource>();
+        MusicChannel = transform.Find("MusicChannel").GetComponent<AudioSource>();
 
         SFXList = new List<AudioClip>();
         MusicList = new List<AudioClip>();
 
-        SFXList.AddRange(Resources.LoadAll<AudioClip>("SFX"));
-        MusicList.AddRange(Resources.LoadAll<AudioClip>("Music"));
+        SFXList.AddRange(Resources.LoadAll<AudioClip>("Audio/SFX"));
+        MusicList.AddRange(Resources.LoadAll<AudioClip>("Audio/Music"));
 
         Debug.Log($"AudioManager-> Init(); Loaded {SFXList.Count} sounds and {MusicList.Count} music tracks");
     }
 
     public static void PlaySound(string clipName)
     {
-
         AudioSource freeSource;
         if (SFXChannel.isPlaying)
         {
@@ -69,7 +68,6 @@ public class AudioManager : MonoBehaviour
         else
         {
             freeSource = SFXChannel;
-
         }
 
         foreach (var clip in SFXList)
@@ -84,13 +82,8 @@ public class AudioManager : MonoBehaviour
     }
     public static void PlaySoundDelayed(string clipName, float delay)
     {
-        Instance.StartCoroutine(DelayedSfxRoutine(clipName, delay));
-    }
-
-    static IEnumerator DelayedSfxRoutine(string clipname, float delay)
-    {
-        yield return new WaitForSecondsRealtime(delay);
-        PlaySound(clipname);
+        // Instance.StartCoroutine(DelayedSfxRoutine(clipName, delay));
+        DOVirtual.DelayedCall(delay, () => PlaySound(clipName));
     }
 
 

@@ -16,6 +16,6 @@ class Skill_Sos : Skill
     {
         AudioManager.PlaySound("sos");
 
-        GameManager.Instance.SummonShip();
+        // GameManager.Instance.SummonShip();
     }
 }

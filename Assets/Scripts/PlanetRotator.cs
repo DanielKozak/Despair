@@ -5,10 +5,12 @@ using UnityEngine;
 public class PlanetRotator : MonoBehaviour
 {
     public bool useScaledDeltaTime = true;
+    [SerializeField] float rotSpeedMin = -3f;
+    [SerializeField] float rotSpeedMax = 3f;
     float rotSpeed;
     private void Start()
     {
-        rotSpeed = Random.Range(-3f, 3f);
+        rotSpeed = Random.Range(rotSpeedMin, rotSpeedMax);
     }
     void Update()
     {

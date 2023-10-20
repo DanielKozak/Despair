@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a8f290fc278212448f2990bd9617188, type: 3}
+  m_Name: AbilityTimeDistortionAOE
+  m_EditorClassIdentifier: 
+  ID: 9
+  NameKey: Time Anomaly
+  DescriptionKey: Slows down all activities
+  UnlockLevel: 8
+  isOneTimeUse: 0
+  IconSmall: {fileID: 21300000, guid: b37a8c519c3cbcc4fa239493a6dd7b3e, type: 3}
+  IconLarge: {fileID: 21300000, guid: b37a8c519c3cbcc4fa239493a6dd7b3e, type: 3}
+  audioClip: {fileID: 8300000, guid: 179788464163db34690a7f4a1657ad96, type: 3}
+  Effect: {fileID: 0}
+  uParamList:
+  - Name: cooldown
+    Description: 
+    Icon: {fileID: 0}
+    currentLevel: 0
+    maxLevel: 5
+    value: 30

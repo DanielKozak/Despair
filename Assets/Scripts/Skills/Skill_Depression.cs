@@ -14,7 +14,7 @@ class Skill_Depression : Skill
 
     public override void ApplyEffects(ShipController target)
     {
-        target.Despair += 30;
+        // target.Despair += 30;
 
         InterfaceManager.Instance.ShowAnimatedLabel(GameManager.Instance.DespairColor, "+30", target.transform.position);
         //InterfaceManager.Instance.ShowAnimatedLabel(GameManager.Instance.DespairColor, "+10", target.transform.position, true);

@@ -6,26 +6,17 @@ using DG.Tweening;
 public class GameManager : Singleton<GameManager>
 {
     [SerializeField] private EventChannelGameFlow _eventChannelGameFlow;
+    [SerializeField] private EventChannelLevelUp _eventChannelLevelUp;
 
 
     [Space]
 
     public GameObject GameRoot;
     public GameObject MenuRoot;
-
-
-    public GameObject OverlayPrefab;
-    public GameObject OverlayParent;
-    public GameObject LabelParent;
-
-
-
     public GameObject Planet;
 
-    public Skill[] SkillList;
     public AbilitySO[] Abilities;
-
-
+    public List<AbilitySO> UnlockedAbilities;
 
 
     public string LongestTortureName;
@@ -41,14 +32,19 @@ public class GameManager : Singleton<GameManager>
         _eventChannelGameFlow.OnGameUnpauseEvent += Callback_OnGameUnpauseEvent;
         _eventChannelGameFlow.OnShowMenuEvent += Callback_OnShowMenuEvent;
         _eventChannelGameFlow.OnNewGameStartEvent += Callback_OnNewGameStartEvent;
-        _eventChannelGameFlow.OnTriggerGameOverEvent -= Callback_OnTriggerGameOverEvent;
+        _eventChannelGameFlow.OnTriggerGameOverEvent += Callback_OnTriggerGameOverEvent;
+        _eventChannelLevelUp.OnAbilityChosenLevelUpEvent += Callback_OnAbilityChosenLevelUpEvent;
 
 
-        PopulateSkillList();
+        // PopulateSkillList();
         PopulateAbilityList();
     }
 
-
+    private void Callback_OnAbilityChosenLevelUpEvent(AbilitySO arg0)
+    {
+        if (arg0.isOneTimeUse) return;
+        UnlockedAbilities.Add(arg0);
+    }
 
     void Start()
     {
@@ -73,44 +69,29 @@ public class GameManager : Singleton<GameManager>
 
     private void Callback_OnNewGameStartEvent()
     {
+        UnlockedAbilities ??= new();
+        UnlockedAbilities.Clear();
         SetRandomPlanet();
+        MenuRoot.SetActive(false);
         GameRoot.SetActive(true);
+
     }
 
     private void Callback_OnTriggerGameOverEvent()
     {
-        StartCoroutine(GameOver());
+        Debug.Log("Callback_OnTriggerGameOverEvent");
     }
     void PopulateAbilityList()
     {
-        Abilities = Resources.LoadAll<AbilitySO>("Abilities");
-    }
-
-    void PopulateSkillList()
-    {
-        SkillList = new Skill[9];
-        Skill s = new Skill_Depression("bg_depression");
-        SkillList[s.ID] = s;
-        s = new Skill_Divine("bg_intervention");
-        SkillList[s.ID] = s;
-        s = new Skill_Ephiphany("bg_heal");
-        SkillList[s.ID] = s;
-        s = new Skill_Insanity("bg_insane");
-        SkillList[s.ID] = s;
-        s = new Skill_Interference("bg_interference");
-        SkillList[s.ID] = s;
-        s = new Skill_Meteor("bg_meteor");
-        SkillList[s.ID] = s;
-        s = new Skill_Physics("bg_physics");
-        SkillList[s.ID] = s;
-        s = new Skill_Sos("bg_sos");
-        SkillList[s.ID] = s;
-        s = new Skill_Xenomorph("bg_xeno");
-        SkillList[s.ID] = s;
+        var loaded = Resources.LoadAll<AbilitySO>("Abilities");
+        Abilities = new AbilitySO[loaded.Length];
+        for (int i = 0; i < loaded.Length; i++)
+        {
+            Abilities[i] = ScriptableObject.Instantiate(loaded[i]);
+        }
 
 
     }
-
     public int ShipCount = 0;
 
     public Color HPColor = new Color(0.6f, 0, 0, 1f);
@@ -130,14 +111,6 @@ public class GameManager : Singleton<GameManager>
     Color MilitaryColor = new Color(1f, 0f, 0f, 1f);
     Color PassengerColor = new Color(0f, 0.3f, 1f, 1f);
 
-
-    public static event System.EventHandler OnGameOver;
-    public IEnumerator GameOver()
-    {
-        OnGameOver?.Invoke(this, null);
-        yield return null;
-    }
-
     private void OnApplicationQuit()
     {
         _eventChannelGameFlow.OnGamePauseEvent -= Callback_OnGamePauseEvent;
@@ -145,6 +118,8 @@ public class GameManager : Singleton<GameManager>
         _eventChannelGameFlow.OnShowMenuEvent -= Callback_OnShowMenuEvent;
         _eventChannelGameFlow.OnNewGameStartEvent -= Callback_OnNewGameStartEvent;
         _eventChannelGameFlow.OnTriggerGameOverEvent -= Callback_OnTriggerGameOverEvent;
+        _eventChannelLevelUp.OnAbilityChosenLevelUpEvent += Callback_OnAbilityChosenLevelUpEvent;
+
     }
 
 }

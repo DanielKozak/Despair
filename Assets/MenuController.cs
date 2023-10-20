@@ -10,6 +10,7 @@ public class MenuController : MonoBehaviour
     [SerializeField] private EventChannelGameFlow _eventChannelGameFlow;
     [SerializeField] private EventChannelAudioMix _eventChannelAudioMix;
     [SerializeField] private EventChannelAudioControl _eventChannelAudioControl;
+    [SerializeField] private EventChannelFactology _eventChannelFactology;
 
     [Space]
     public Text HighScoreText;
@@ -126,16 +127,13 @@ public class MenuController : MonoBehaviour
     public void onStartButtonPressed()
     {
         _eventChannelGameFlow.RaiseOnNewGameStartEvent();
-        StartButton.gameObject.SetActive(false);
-        // _eventChannelAudioControl
+        // StartButton.gameObject.SetActive(false);
         AudioManager.PlaySound("click");
     }
     public void onTutorialButtonPressed()
     {
         AudioManager.PlaySound("click");
 
-        // gameObject.SetActive(false);
-        // Tutorial1.SetActive(true);
     }
     public void onExitButtonPressed()
     {
@@ -153,9 +151,9 @@ public class MenuController : MonoBehaviour
         music.volume = MusicSlider.value;
     }
 
-    public void OnTutorialDone()
+    public void OnTutorialTogglePressed(bool value)
     {
-        PlayerPrefs.SetInt("_tutorial", 1);
+        _eventChannelFactology.RaiseTriggerFactEvent("tutorial_isEnabled", value);
     }
 
 }

@@ -6,207 +6,132 @@ using DG.Tweening;
 using UnityEngine.EventSystems;
 using System;
 
-public class UI_ButtonController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+public class UI_ButtonController : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-    public enum ButtonState
-    {
-        Locked, CoolDown, Active, Selected
-    }
-
-    public ButtonState currentState = ButtonState.Locked;
+    EventChannelAbilities _eventChannelAbilities;
 
     [SerializeField] Image bg;
-    [SerializeField] Image frame_active;
     [SerializeField] Image frame_selected;
-    [SerializeField] Image overlay_locked;
     [SerializeField] Image overlay_masked;
     [SerializeField] Text cd_text;
 
-    static GameObject ToolTip;
-
-    public int skillID;
-    public Skill skill;
+    AbilitySO _ability;
 
 
     public float hoverCd = 2;
 
-    void Start()
+    void OnEnable()
     {
-        GetComponent<Button>().onClick.AddListener(() => TestCooldown());
-    }
-    public void Init()
-    {
-        skill = GameManager.Instance.SkillList[skillID];
-        SetState(ButtonState.Locked);
-        if (skill.ID == 0) UnlockSkill();
+        _eventChannelAbilities ??= RuntimeEventChannelContainer.Instance.EventChannelAbilitiesInstance;
+
+        _eventChannelAbilities.OnAbilityUsedEvent += Callback_OnAbilityUsed;
+        _eventChannelAbilities.OnAbilitySelectedEvent += Callback_OnAbilitySelectedEvent;
+        _eventChannelAbilities.OnAbilityDeselectedEvent += Callback_OnAbilityDeselectedEvent;
     }
 
-    public void SetState(ButtonState newState)
+
+    void OnDisable()
     {
-        switch (newState)
+        _eventChannelAbilities.OnAbilityUsedEvent -= Callback_OnAbilityUsed;
+        _eventChannelAbilities.OnAbilitySelectedEvent -= Callback_OnAbilitySelectedEvent;
+        _eventChannelAbilities.OnAbilityDeselectedEvent -= Callback_OnAbilityDeselectedEvent;
+    }
+
+    void Select()
+    {
+
+        frame_selected.gameObject.SetActive(true);
+        // frame_selected.D
+
+        DOTween.To(() => frame_selected.pixelsPerUnitMultiplier, x => frame_selected.pixelsPerUnitMultiplier = x, 2f, 1f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.Linear);
+        // frame_selected.DOFade(0.8f, 0.5f).SetLoops(-1).SetEase(Ease.Linear);
+    }
+
+    void Deselect()
+    {
+        frame_selected.DOKill();
+        frame_selected.gameObject.SetActive(false);
+    }
+
+    private void Callback_OnAbilityDeselectedEvent()
+    {
+        Deselect();
+    }
+
+    private void Callback_OnAbilitySelectedEvent(AbilitySO arg0)
+    {
+        if (!arg0.Equals(_ability))
         {
-            case ButtonState.Locked:
-
-                frame_active.gameObject.SetActive(false);
-                overlay_locked.gameObject.SetActive(true);
-                overlay_masked.gameObject.SetActive(false);
-                frame_selected.gameObject.SetActive(false);
-
-                cd_text.gameObject.SetActive(false);
-
-                break;
-            case ButtonState.CoolDown:
-                frame_active.gameObject.SetActive(false);
-                overlay_locked.gameObject.SetActive(false);
-                overlay_masked.gameObject.SetActive(true);
-                frame_selected.gameObject.SetActive(false);
-                cd_text.gameObject.SetActive(true);
-                StartCoroutine(CooldownRoutine());
-
-                break;
-            case ButtonState.Active:
-                // Debug.Log("VOT TI GDE PIDAR");
-
-                frame_active.gameObject.SetActive(true);
-                overlay_locked.gameObject.SetActive(false);
-                overlay_masked.gameObject.SetActive(false);
-                frame_selected.gameObject.SetActive(false);
-                cd_text.gameObject.SetActive(false);
-
-                break;
-            case ButtonState.Selected:
-                frame_active.gameObject.SetActive(false);
-                overlay_locked.gameObject.SetActive(false);
-                overlay_masked.gameObject.SetActive(false);
-                frame_selected.gameObject.SetActive(true);
-                cd_text.gameObject.SetActive(false);
-
-                break;
-        }
-        currentState = newState;
-    }
-
-
-
-    IEnumerator CooldownRoutine()
-    {
-
-        Debug.Log("CD ROUTINE");
-        for (int i = 0; i < skill.cooldown; i++)
-        {
-            cd_text.text = $"{skill.cooldown - i} s";
-            //TWEEN MASK
-            yield return new WaitForSeconds(1f);
+            Deselect();
+            return;
         }
 
-        Debug.Log("CD ROUTINE2");
-        SetState(ButtonState.Active);
+        Select();
+
     }
 
-    bool stopped = false;
-    bool shown = false;
-    IEnumerator HoverRoutine()
+    private void Callback_OnAbilityUsed(Vector3 arg0, AbilitySO arg1)
     {
-        tooltipShown = true;
-        yield return new WaitForSeconds(hoverCd);
+        if (!arg1.Equals(_ability)) return;
 
-        Vector3 pos = new Vector3(transform.position.x + 300, transform.position.y, 0);
+        OnUsed();
+    }
 
-        DestroyImmediate(ToolTip);
-        if (!isPointerInSkill) yield break;
-        ToolTip = Instantiate(InterfaceManager.Instance.LeftToolTipPrefab, pos, transform.rotation);
-        ToolTip.transform.SetParent(transform.parent.parent);
-        var texts = ToolTip.GetComponentsInChildren<Text>();
-        foreach (var item in texts)
+    public void Init(AbilitySO ability)
+    {
+        // transform.DOShakePosition(1f);
+        _ability = ability;
+        bg.sprite = _ability.IconSmall;
+        GetComponent<Button>().onClick.AddListener(() => OnSelect());
+
+    }
+
+    public void AddUpgradeMarker(UpgradeableParam uParam)
+    {
+
+    }
+
+
+
+    bool isInCoolDown = false;
+    private void OnSelect()
+    {
+        if (isInCoolDown)
         {
-            if (item.gameObject.name == "title")
-            {
-                item.text = skill.Name;
-            }
-            if (item.gameObject.name == "descr")
-            {
-                item.text = skill.Descr;
-            }
-            if (item.gameObject.name == "effects")
-            {
-                item.text = skill.effectsDescr;
-            }
+            return;
         }
-        ToolTip.SetActive(true);
+
+
+        if (_ability.isUseImmediate)
+        {
+            _eventChannelAbilities.RaiseOnAbilityUsedEvent(Vector3.zero, _ability);
+
+        }
+        else
+        {
+            _eventChannelAbilities.RaiseOnSkillSelectedEvent(_ability);
+        }
     }
 
-    public void UnlockSkill()
+    private void OnUsed()
     {
-        SetState(ButtonState.Active);
-        transform.DOShakePosition(1f);
+        isInCoolDown = true;
 
-    }
-
-    public void OnPointerClick(PointerEventData eventData)
-    {
-
-        TestCooldown();
-        Debug.Log("Test cooldown");
-        /*
-                switch (currentState)
-                {
-                    case ButtonState.Locked:
-                        //overlay_locked.DOColor(Color.red, 0.5f).SetLoops(1, LoopType.Yoyo).SetEase(Ease.Linear);
-
-                        break;
-                    case ButtonState.CoolDown:
-                        //overlay_locked.DOColor(Color.red, 0.5f).SetLoops(1, LoopType.Yoyo).SetEase(Ease.Linear);
-
-                        break;
-                    case ButtonState.Active:
-                        InterfaceManager.Instance.SelectSkill(skill.ID);
-                        if (InterfaceManager.Instance.CurrentPointerMode != InterfaceManager.PointerMode.Targeting)
-                        {
-                            SetState(ButtonState.Selected);
-                        }
-                        break;
-                    case ButtonState.Selected:
-                        InterfaceManager.Instance.DeselectSkill();
-                        SetState(ButtonState.Active);
-                        break;
-                }*/
-    }
-
-    private void TestCooldown()
-    {
         overlay_masked.fillAmount = 1;
-        overlay_masked.DOFillAmount(0f, 5f).SetEase(Ease.Linear);
-    }
-
-    static bool tooltipShown = false;
-    bool isPointerInSkill = false;
-
-    Tween showToolTipTween;
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        isPointerInSkill = false;
-
-        Debug.Log($"OPEx ---> {skill.Name}");
-        if (tooltipShown) HideToolTip();
-
+        overlay_masked.DOFillAmount(0f, _ability.GetParam("cooldown").value).SetEase(Ease.Linear).OnComplete(() => isInCoolDown = false);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-
-        isPointerInSkill = true;
-        Debug.Log($"OPEn ---> {skill.Name}");
-        if (!tooltipShown)
-            if (currentState != ButtonState.Locked)
-            {
-                StartCoroutine(HoverRoutine());
-            }
+        // Debug.Log("ShowTooltip");
+        ToolTipController.Instance.Show(_ability);
     }
 
-    void HideToolTip()
+    public void OnPointerExit(PointerEventData eventData)
     {
-        StopCoroutine(HoverRoutine());
-        DestroyImmediate(ToolTip);
-        tooltipShown = false;
+        // Debug.Log("HideTooltip");
+
+        ToolTipController.Instance.Hide();
     }
+
 }

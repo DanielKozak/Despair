@@ -5,7 +5,8 @@ using UnityEngine;
 public class ShipTypeSO : ScriptableObject
 {
     public ShipType typeID;
-    public RandomPrefabChooserSO GraphicsSet;
+    // public RandomPrefabChooserSO GraphicsSet;
+    public GameObject GraphicsSet;
 
     public float RepairMod;
     public float DespairMod;

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60aba3f848e08e744a052205aa20e079, type: 3}
+  m_Name: Civilian
+  m_EditorClassIdentifier: 
+  typeID: 3
+  GraphicsSet: {fileID: 2220939861668648803, guid: efa2f743730089d4c83d937ddd51eecf,
+    type: 3}
+  RepairMod: 1
+  DespairMod: 1.5
+  IntelMod: 1
+  FightMod: 0.5

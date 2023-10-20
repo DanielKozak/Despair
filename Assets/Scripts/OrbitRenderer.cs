@@ -40,7 +40,7 @@ public class OrbitRenderer : MonoBehaviour
             result[i] = new Vector3(x, y, 0);
         }
         result[precision - 1] = result[0];
-        Debug.Log(result.Length);
+        // Debug.Log(result.Length);
 
         return result;
 

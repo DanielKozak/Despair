@@ -6,8 +6,13 @@ public class ShipGenerator : MonoBehaviour
     [SerializeField] EventChannelShipSpawner spawnerChannel;
 
     [Space]
-    [SerializeField] Transform shipParent;
-    [SerializeField] GameObject shipPrefab;
+    [SerializeField] Transform ShipParent;
+    [SerializeField] GameObject prefab_Ship;
+
+    [SerializeField] Transform OverlayParent;
+    [SerializeField] UI_DBG_ShipOverlay prefab_Overlay;
+
+    [SerializeField] Camera _Camera;
 
     string[] _nameList;
 
@@ -19,23 +24,24 @@ public class ShipGenerator : MonoBehaviour
 
     public void OnEnable()
     {
-        spawnerChannel.OnSpawnShipRequestEvent += OnSpawnShipRequest;
+        spawnerChannel.OnSpawnShipRequestEvent += Callback_OnSpawnShipRequest;
     }
 
 
     void OnDisable()
     {
-        spawnerChannel.OnSpawnShipRequestEvent -= OnSpawnShipRequest;
+        spawnerChannel.OnSpawnShipRequestEvent -= Callback_OnSpawnShipRequest;
     }
-    private void OnSpawnShipRequest(ShipTypeSO typeSO)
+    private void Callback_OnSpawnShipRequest(ShipTypeSO typeSO)
     {
         Debug.Log($"ShipGenerator -> OnSpawnShipRequest");
+        GenerateShip(typeSO);
     }
 
     void GenerateShip(ShipTypeSO typeSO)
     {
-        GameObject newShip = Instantiate(shipPrefab, shipParent);
-        GameObject newShipGraphics = Instantiate(typeSO.GraphicsSet.GetRandom(), newShip.transform);
+        GameObject newShip = Instantiate(prefab_Ship, ShipParent);
+        GameObject newShipGraphics = Instantiate(typeSO.GraphicsSet, newShip.transform);
 
         float angle = Random.Range(0f, 359f);
         float radius = Random.Range(8f, 15f);
@@ -44,21 +50,11 @@ public class ShipGenerator : MonoBehaviour
         newShip.name = shipName;
 
         ShipController newShipController = newShip.GetComponent<ShipController>();
-        newShipController.OrbitHeight = radius;
-        newShipController.ShipName = shipName;
+        newShipController.Init(typeSO, shipName, radius, angle);
 
-        newShip.transform.position = OrbitRenderer.GetPoint(radius, angle).normalized * 50f;
-        newShipController.OrbitInsertionAngle = angle;
-
-        newShipController.TypeData = typeSO;
-        /*
-                GameObject newOverlay = Instantiate(OverlayPrefab, OverlayParent.transform);
-                newOverlay.GetComponent<ShipUIOverlay>().LinkedShip = newShipController;
-                newOverlay.name = newShipController.ShipName + "_overlay";
-
-                newShipController.SetOverlay(newOverlay);
-                newShipController.timerCircle = newOverlay.GetComponent<ShipUIOverlay>().TimerMask.gameObject;
-        */
+        UI_DBG_ShipOverlay overlay = Instantiate(prefab_Overlay, OverlayParent);
+        overlay.Init(newShipController, _Camera);
+        newShipController.SetDBGOverlay(overlay);
 
     }
 
@@ -70,62 +66,3 @@ public enum ShipType
 {
     Science, Engeneer, Military, Civilian
 }
-/*
- 
-        ShipController newShipController = newShip.GetComponent<ShipController>();
-        newShipController.OrbitHeight = radius;
-        newShipController.ShipName = newShip.name;
-        newShip.transform.position = OrbitRenderer.GetPoint(radius, angle).normalized * 50f;
-        newShipController.OrbitInsertionAngle = angle;
-
-        newShipController.ShipType = type;
-
-        switch (type)
-        {
-            case 0:
-                newShip.GetComponentInChildren<SpriteRenderer>().color = ScienceShipColor;
-                Debug.Log("Ship" + type + " " + newShip.GetComponentInChildren<SpriteRenderer>().color);
-
-                newShipController.IntelMod = 1.5f;
-                newShipController.FightMod = 0.5f;
-                newShipController.ShipType = type;
-                break;
-            case 1:
-                newShip.GetComponentInChildren<SpriteRenderer>().color = EngineerColor;
-                Debug.Log("Ship" + type + " " + newShip.GetComponentInChildren<SpriteRenderer>().color);
-
-                newShipController.RepairMod = 1.5f;
-                newShipController.DespairMod = 0.5f;
-                newShipController.ShipType = type;
-
-                break;
-            case 2:
-                newShip.GetComponentInChildren<SpriteRenderer>().color = MilitaryColor;
-                Debug.Log("Ship" + type + " " + newShip.GetComponentInChildren<SpriteRenderer>().color);
-
-                newShipController.FightMod = 1.5f;
-                newShipController.DespairMod = 0.5f;
-                newShipController.ShipType = type;
-
-                break;
-            case 3:
-                newShip.GetComponentInChildren<SpriteRenderer>().color = PassengerColor;
-                Debug.Log("Ship" + type + " " + newShip.GetComponentInChildren<SpriteRenderer>().color);
-
-                newShipController.FightMod = 0.5f;
-                newShipController.DespairMod = 1.5f;
-                newShipController.ShipType = type;
-
-                break;
-        }
-
-
-        GameObject newOverlay = Instantiate(OverlayPrefab, OverlayParent.transform);
-        newOverlay.GetComponent<ShipUIOverlay>().LinkedShip = newShipController;
-        newOverlay.name = newShipController.ShipName + "_overlay";
-
-        newShipController.SetOverlay(newOverlay);
-        newShipController.timerCircle = newOverlay.GetComponent<ShipUIOverlay>().TimerMask.gameObject;
-
-
-*/

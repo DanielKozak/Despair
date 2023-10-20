@@ -7,7 +7,7 @@ public class EventChannelDespairScoreTick : ScriptableObject
     public UnityAction<int> OnDespairTickEvent;
 
 
-    public void RaiseOnDespairTickEventEvent(int amount)
+    public void RaiseOnDespairTickEvent(int amount)
     {
         DBG_LogManager.Instance.LogEvent(this, "OnDespairTickEvent", amount);
 

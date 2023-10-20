@@ -16,7 +16,7 @@ class Skill_Ephiphany : Skill
     {
         AudioManager.PlaySound("heal");
 
-        target.Despair -= 30;
+        // target.Despair -= 30;
 
         InterfaceManager.Instance.ShowAnimatedLabel(GameManager.Instance.DespairColor, "-30", target.transform.position);
         //InterfaceManager.Instance.ShowAnimatedLabel(GameManager.Instance.DespairColor, "+10", target.transform.position, true);

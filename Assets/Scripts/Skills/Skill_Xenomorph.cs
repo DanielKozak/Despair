@@ -17,9 +17,9 @@ class Skill_Xenomorph : Skill
     public override void ApplyEffects(ShipController target)
     {
         AudioManager.PlaySound("alien");
-        target.isBoarded = true;
-        target.enemyHP += 60;
-        target.Despair += 30;
+        // target.isBoarded = true;
+        // target.enemyHP += 60;
+        // target.Despair += 30;
 
         InterfaceManager.Instance.ShowAnimatedLabel(GameManager.Instance.HPColor, "Boarded", target.transform.position);
 

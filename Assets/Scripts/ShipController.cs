@@ -3,24 +3,19 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using System.Threading;
+using ProceduralToolkit;
+using System;
 
 public class ShipController : MonoBehaviour
 {
-    [SerializeField] EventChannelDespairScoreTick _eventChannelDespairScoreTick;
-    [SerializeField] EventChannelScanInfo _eventChannelScanInfo;
-    [SerializeField] EventChannelGameFlow _eventChannelGameFlow;
+    EventChannelDespairScoreTick _eventChannelDespairScoreTick;
+    EventChannelScanInfo _eventChannelScanInfo;
+    EventChannelGameFlow _eventChannelGameFlow;
 
-    public enum Status
-    {
-        Arriving, Orbiting, Departing, Dead
-    }
-    public Status CurrentStatus = Status.Arriving;
-    public enum ShipTask
-    {
-        FTL, Scanning, Repairs, Fighting, Resting, Frozen
-    }
 
-    private ShipTask _curTask = ShipTask.FTL;
+    ShipOrbitalStatus CurrentStatus = ShipOrbitalStatus.Arriving;
+    ShipTask _curTask = ShipTask.FTL;
 
     public ShipTask CurrentTask
     {
@@ -28,205 +23,247 @@ public class ShipController : MonoBehaviour
         set
         {
             _curTask = value;
-            if (isStunned) myOverlay.GetComponent<ShipUIOverlay>().UpdateTaskText("Stunned, resting");
-            else myOverlay.GetComponent<ShipUIOverlay>().UpdateTaskText();
+            // if (isStunned) myOverlay.GetComponent<ShipUIOverlay>().UpdateTaskText("Stunned, resting");
+            // else myOverlay.GetComponent<ShipUIOverlay>().UpdateTaskText();
+            // if (isStunned) _overlay.SetTaskLabel("Stunned");
+            if (isStunned) _overlay.SetStatusLabel("Stunned");
+            else if (isFrozen) _overlay.SetStatusLabel("Frozen");
+            else _overlay.SetStatusLabel("");
+
+
+            _overlay.SetTaskLabel($"{_curTask}");
 
             taskCounter = 0;
         }
     }
 
+    public float HP
+    {
+        get => _hp; set
+        {
+            _hp = Mathf.Clamp(value, 0, 100f);
+            _overlay.SetHPLabel(Mathf.FloorToInt(_hp).ToString());
+        }
+    }
+    public float Despair
+    {
+        get => _despair; set
+        {
+            _despair = Mathf.Clamp(value, 0, 100f);
+            _overlay.SetDespairLabel(Mathf.FloorToInt(_despair).ToString());
 
-    public ShipTypeSO TypeData;
+        }
+    }
+    public float Intel
+    {
+        get => _intel; set
+        {
+            _intel = Mathf.Clamp(value, 0, 100f);
+            _overlay.SetInfoLabel(Mathf.FloorToInt(_intel).ToString());
+        }
+    }
+
+    ShipTypeSO _typeData;
 
     float taskCounter = 0;
 
     //GAME PARAMS   
-    public float HP = 100;
-    public float Despair = 0;
-    public float Intel = 0;
+    float _hp = 100;
+    float _despair = 0;
+    float _intel = 0;
+    string _shipName;
 
-    public bool isFrozen;
-    public bool isStunned;
+    bool isFrozen;
+    bool isStunned;
 
 
-    public string ShipName;
+    float FTLSpeed = 50f;
 
-    public float tortureTime = 0f;
+    float _orbitHeight;
+    float _orbitInsertionAngle;
+    Vector3 OrbitInsertionPoint;
+    SpriteRenderer _spriteRenderer;
 
-    public int OrbitalSpeed = 20;
-    public float OrbitHeight;
-    public float OrbitInsertionAngle;
-    public Vector3 OrbitInsertionPoint;
-    public SpriteRenderer sprite;
-
-    public TrailRenderer FTLTrail;
-    Vector3[] path;
-    int currentPositionIndex;
-    int pathPrecision = 360;
+    [SerializeField] TrailRenderer FTLTrail;
     private Dictionary<ShipTask, float> TaskWeights = new Dictionary<ShipTask, float>();
-    int clockwise;
     int dir;
 
     GameObject myOverlay;
 
-    public GameObject timerCircle;
+    public float CurrentPositionAngle;
 
-    public void onGameOver(object sender, System.EventArgs e)
+
+    void Subscribe()
     {
-        Depart();
-        GameManager.OnGameOver -= onGameOver;
+        _eventChannelDespairScoreTick = RuntimeEventChannelContainer.Instance.EventChannelDespairScoreTickInstance;
+        _eventChannelScanInfo = RuntimeEventChannelContainer.Instance.EventChannelScanInfoInstance;
+        _eventChannelGameFlow = RuntimeEventChannelContainer.Instance.EventChannelGameFlowInstance;
 
+        _eventChannelGameFlow.OnTriggerColonisationEvent += Callback_OnTriggerColonisationEvent;
     }
 
-    void Start()
+    void UnSubscribe()
     {
-        GameManager.OnGameOver += onGameOver;
-        path = OrbitRenderer.GetPoints(OrbitHeight, pathPrecision);
+        _eventChannelGameFlow.OnTriggerColonisationEvent -= Callback_OnTriggerColonisationEvent;
+    }
+
+    private void Callback_OnTriggerColonisationEvent()
+    {
+        Depart();
+    }
+    internal void Init(ShipTypeSO typeSO, string shipName, float radius, float angle)
+    {
+        _typeData = typeSO;
+        _shipName = shipName;
+        _orbitHeight = radius;
+        _orbitInsertionAngle = angle;
+
+        _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+
         TaskWeights.Add(ShipTask.Scanning, 0.5f);
         TaskWeights.Add(ShipTask.Repairs, 0f);
         TaskWeights.Add(ShipTask.Fighting, 0f);
         TaskWeights.Add(ShipTask.Resting, 0f);
-        CurrentPositionAngle = OrbitInsertionAngle;
-        OrbitInsertionPoint = OrbitRenderer.GetPoint(OrbitHeight, OrbitInsertionAngle);
 
-        dir = Random.Range(0f, 1f) < 0.5f ? 1 : -1;
-        //if (dir > 0) gameObject.transform.localScale = new Vector3(1, -1, 1);
-        sprite.color = new Color(sprite.color.r, sprite.color.g, sprite.color.b, 0f);
-        minDelta = Random.Range(0.2f, 0.8f);
+        CurrentPositionAngle = _orbitInsertionAngle;
+        OrbitInsertionPoint = OrbitRenderer.GetPoint(_orbitHeight, _orbitInsertionAngle);
+        dir = UnityEngine.Random.Range(0f, 1f) < 0.5f ? 1 : -1;
+        // sprite.color = sprite.color.WithA(0f);
+
+        transform.position = OrbitRenderer.GetPoint(_orbitHeight, _orbitInsertionAngle).normalized * 50f;
+
+
+        Subscribe();
+        // StartCoroutine(ArrivingCoroutine());
+        _spriteRenderer.DOFade(1f, 1f);
+
+
     }
+
     public void SetOverlay(GameObject overlay)
     {
         myOverlay = overlay;
     }
+    UI_DBG_ShipOverlay _overlay;
+    public void SetDBGOverlay(UI_DBG_ShipOverlay dbgOverlay)
+    {
+        _overlay ??= dbgOverlay;
+        _overlay.SetNameLabel(_shipName);
+    }
 
+    float timer = 1f;
+    float cTimer = 0f;
 
-    // Update is called once per frame
     void Update()
     {
-        tortureTime += Time.deltaTime;
         switch (CurrentStatus)
         {
-            case Status.Arriving:
+            case ShipOrbitalStatus.Arriving:
                 UpdateArrivingPosition();
                 break;
-            case Status.Orbiting:
+            case ShipOrbitalStatus.Orbiting:
                 UpdateOrbitalPosition();
                 CheckAndUpdateParams();
-                CheckAndUpdateTask();
                 break;
-            case Status.Departing:
+            case ShipOrbitalStatus.Departing:
                 UpdateDepartingPosition();
                 CurrentTask = ShipTask.FTL;
                 break;
-            case Status.Dead:
-                //UpdateOrbitalPosition();
-                break;
         }
-        /*if (Input.GetKeyUp(KeyCode.F1))
+
+        cTimer += Time.deltaTime;
+        if (cTimer > timer)
         {
-            Depart();
-        }*/
+            cTimer = cTimer - timer;
+            UpdateAI();
+        }
 
     }
 
+    void UpdateAI()
+    {
+        if (CurrentStatus == ShipOrbitalStatus.Orbiting)
+        {
+            CheckAndUpdateTask();
+        }
+    }
 
-    public float CurrentPositionAngle;
+
     void UpdateOrbitalPosition()
     {
-        CurrentPositionAngle += ((20 - OrbitHeight) / 2f) * Time.deltaTime * dir;
-        transform.position = OrbitRenderer.GetPoint(OrbitHeight, CurrentPositionAngle);
+        CurrentPositionAngle += ((20 - _orbitHeight) / 2f) * Time.deltaTime * dir;
+        transform.position = OrbitRenderer.GetPoint(_orbitHeight, CurrentPositionAngle);
         int mod = dir > 0 ? -1 : 1;
         transform.up = mod * new Vector3(transform.position.y, -1 * transform.position.x, 0).normalized;
         //sprite.transform.rotation =  (transform.position - GameManager.Instance.Planet.transform.position)
     }
-    float FTLSpeed = 50f;
-
-    float c = 0;
-
-    bool isArrivingStarted = false;
-    IEnumerator ArrivingCoroutine()
+    IEnumerator BoostCoroutine()
     {
-        isArrivingStarted = true;
         AudioManager.PlaySound("boost");
+        FTLTrail.gameObject.SetActive(false);
+        // Debug.Log("boost rootine");
+        int mod = dir > 0 ? -1 : 1;
+        transform.DOLocalRotate(mod * new Vector3(transform.position.y, -1 * transform.position.x, 0).normalized, 0.2f).SetEase(Ease.Linear);
         yield return new WaitForSeconds(0.2f);
-        CurrentStatus = Status.Orbiting;
+        CurrentStatus = ShipOrbitalStatus.Orbiting;
+        // transform.up = mod * new Vector3(transform.position.y, -1 * transform.position.x, 0).normalized;
 
         StartCoroutine(TickResources());
-        GetComponentInChildren<OrbitRenderer>().Show(OrbitHeight);
+        GetComponentInChildren<OrbitRenderer>().Show(_orbitHeight);
     }
 
-    bool isFlipped;
-    bool playSound = false;
+    Coroutine boostRoutine;
     void UpdateArrivingPosition()
     {
-        if (isArrivingStarted) return;
-        if (Vector3.Distance(transform.position, Vector3.zero) <= OrbitHeight)
+        if (boostRoutine != null) return;
+        if (Vector3.Distance(transform.position, Vector3.zero) <= _orbitHeight)
         {
-            StartCoroutine(ArrivingCoroutine());
+
+            boostRoutine = StartCoroutine(BoostCoroutine());
             return;
         }
 
         Vector3 l_dir = (OrbitInsertionPoint - transform.position).normalized;
         float dist = Vector3.Distance(transform.position, OrbitInsertionPoint);
 
-        if (dist <= 10)
-        {
-            sprite.DOColor(new Color(sprite.color.r, sprite.color.g, sprite.color.b, 1f), 1f);
-            if (!playSound)
-            {
-                AudioManager.PlaySound("");
-                playSound = true;
 
-            }
-        }
-
-
-        if (dist <= 1)
-        {
-            //Debug.Log($" up.z {transform.up} |rot {transform.rotation.eulerAngles} |  result {new Vector3(OrbitInsertionPoint.y, -1 * OrbitInsertionPoint.x, 0)}");
-            //Vector3 v = new Vector3(OrbitInsertionPoint.y, -1 * OrbitInsertionPoint.x, 0);
-            int mod = dir > 0 ? -1 : 1;
-
-            FTLTrail.gameObject.SetActive(false);
-            transform.up = Vector3.LerpUnclamped(l_dir, mod * new Vector3(OrbitInsertionPoint.y, -1 * OrbitInsertionPoint.x, 0), (1 - dist)).normalized;
-            //transform.DORotate(new Vector3(OrbitInsertionPoint.y, -1 * OrbitInsertionPoint.x, 0), 1, RotateMode.FastBeyond360);
-
-            //if(dist<=2) transform.DORotate(new Vector3(OrbitInsertionPoint.y, -1 * OrbitInsertionPoint.x, 0))
-
-
-        }
-        else transform.up = l_dir;
+        transform.up = l_dir;
         transform.position += l_dir * FTLSpeed * Time.deltaTime;
-        FTLSpeed = dist / 0.5f + 2;
+        FTLSpeed = dist * 2f + 2;
+
+
     }
 
-    public void CompareShipData()
-    {
-        _eventChannelScanInfo.RaiseOnScanInfoLevelChangedEvent(Mathf.FloorToInt(Intel * TypeData.IntelMod));
+    // public void CompareShipData()
+    // {
+    //     _eventChannelScanInfo.RaiseOnScanInfoLevelChangedEvent(Mathf.FloorToInt(Intel * TypeData.IntelMod));
 
-        if (tortureTime > GameManager.Instance.LongestTortureTime)
-        {
-            GameManager.Instance.LongestTortureTime = tortureTime;
-            GameManager.Instance.LongestTortureName = ShipName;
-            GameManager.Instance.LongestTortureType = (int)TypeData.typeID;
+    //     if (tortureTime > GameManager.Instance.LongestTortureTime)
+    //     {
+    //         GameManager.Instance.LongestTortureTime = tortureTime;
+    //         GameManager.Instance.LongestTortureName = ShipName;
+    //         GameManager.Instance.LongestTortureType = (int)TypeData.typeID;
 
-            PlayerPrefs.SetString("_torturedName", ShipName);
-            PlayerPrefs.SetFloat("_torturedTime", tortureTime);
-            PlayerPrefs.SetInt("_torturedtype", (int)TypeData.typeID);
-        }
-    }
+    //         PlayerPrefs.SetString("_torturedName", ShipName);
+    //         PlayerPrefs.SetFloat("_torturedTime", tortureTime);
+    //         PlayerPrefs.SetInt("_torturedtype", (int)TypeData.typeID);
+    //     }
+    // }
     void UpdateDepartingPosition()
     {
         if (Vector3.Distance(transform.position, Vector3.zero) >= 100)
         {
-            Destroy(myOverlay);
+            // Destroy(myOverlay);
             Destroy(gameObject);
 
-            CompareShipData();
+            // CompareShipData();
 
             GameManager.Instance.ShipCount--;
             if (GameManager.Instance.ShipCount == 0)
-                Debug.LogError("GameOver");
+            {
+                _eventChannelGameFlow.RaiseOnTriggerColonisationEvent();
+                Debug.Log("GameOver");
+            }
             return;
         }
         Vector3 dir = this.dir > 0 ? transform.up : -transform.up;
@@ -238,26 +275,12 @@ public class ShipController : MonoBehaviour
         FTLSpeed = dist / 0.5f;
 
     }
-    private float wIntel;
-    private float wRep;
-    private float wFight;
-    private float wChill;
-
-
-    private float minDelta = 1;
-    private float maxDelta = 10;
 
     private float critHP = 40;
-    private float switchWeightHP;
-    private float switchWeightDesp;
 
 
     void CheckAndUpdateTask()
     {
-        wIntel = TaskWeights[ShipTask.Scanning];
-        wRep = TaskWeights[ShipTask.Repairs];
-        wFight = TaskWeights[ShipTask.Fighting];
-        wChill = TaskWeights[ShipTask.Resting];
 
         float nHp = HP / 100f;
         float nDp = Despair / 100f;
@@ -272,9 +295,9 @@ public class ShipController : MonoBehaviour
         //switchWeightDesp = HP < critHP ? 0 : (taskCounter - minDelta) / (maxDelta - minDelta);
 
 
-        TaskWeights[ShipTask.Repairs] = ((1 - nHp) * ((1 - nHp) / (1 - critHP / 100f)));// * switchWeightHP;
+        TaskWeights[ShipTask.Repairs] = (1 - nHp) * ((1 - nHp) / (1 - critHP / 100f));// * switchWeightHP;
         if (isFrozen) TaskWeights[ShipTask.Repairs] = 0;
-        TaskWeights[ShipTask.Resting] = (nDp);// * switchWeightDesp;
+        TaskWeights[ShipTask.Resting] = nDp;// * switchWeightDesp;
         if (isStunned) TaskWeights[ShipTask.Resting] = 1000;
         //TaskWeights[ShipTask.Repair] = HP < critHP ? 1 : TaskWeights[ShipTask.Repair];
 
@@ -349,33 +372,30 @@ public class ShipController : MonoBehaviour
             switch (CurrentTask)
             {
                 case ShipTask.Scanning:
-                    Intel += 1 * TypeData.IntelMod;
-                    if (Intel >= 100)
-                    {
-                        Depart();
-                    }
+                    Intel += 1 * _typeData.IntelMod;
+
                     if (Intel >= 80 && !isShakingIntel)
                     {
-                        myOverlay.GetComponent<ShipUIOverlay>().IntelBar.transform.DOScale(1.2f, 2f).SetLoops(-1).SetEase(Ease.InOutCirc);
+                        // myOverlay.GetComponent<ShipUIOverlay>().IntelBar.transform.DOScale(1.2f, 2f).SetLoops(-1).SetEase(Ease.InOutCirc);
                         StartCoroutine(PingRoutine());
                         isShakingIntel = true;
                     }
                     if (Intel <= 80 && isShakingIntel)
                     {
-                        myOverlay.GetComponent<ShipUIOverlay>().IntelBar.transform.DOKill(true);
+                        // myOverlay.GetComponent<ShipUIOverlay>().IntelBar.transform.DOKill(true);
                         StopCoroutine(PingRoutine());
                         isShakingIntel = false;
                     }
 
                     break;
                 case ShipTask.Repairs:
-                    HP += 1 * TypeData.RepairMod;
+                    HP += 1 * _typeData.RepairMod;
 
                     break;
                 case ShipTask.Fighting:
                     if (enemyHP > 0)
                     {
-                        float x = Random.Range(1, 3) * TypeData.FightMod;
+                        float x = UnityEngine.Random.Range(1, 3) * _typeData.FightMod;
                         HP -= x;
                         enemyHP -= x;
                     }
@@ -387,16 +407,16 @@ public class ShipController : MonoBehaviour
 
                     break;
                 case ShipTask.Resting:
-                    Despair -= (2 * TypeData.DespairMod);
+                    Despair -= (2 * _typeData.DespairMod);
                     break;
             }
-            Despair -= (Random.Range(-2, +2) * TypeData.DespairMod);
+            Despair -= UnityEngine.Random.Range(0, +2) * _typeData.DespairMod;
             if (Despair < 0) Despair = 0;
             int deltaScore = Mathf.FloorToInt(Despair / 10f);
             if (deltaScore > 0)
             {
-                _eventChannelDespairScoreTick.RaiseOnDespairTickEventEvent(deltaScore);
-                InterfaceManager.Instance.ShowAnimatedLabel(GameManager.Instance.DespairColor, $"+{deltaScore}", transform.position); //TODO: mvoe to events
+                _eventChannelDespairScoreTick.RaiseOnDespairTickEvent(deltaScore);
+                InterfaceManager.Instance.ShowAnimatedLabel(Color.white, $"+{deltaScore}", transform.position); //TODO: mvoe to events
             }
 
             yield return new WaitForSeconds(1f);
@@ -407,27 +427,34 @@ public class ShipController : MonoBehaviour
     public void Damage(int dmg)
     {
         HP -= dmg;
+
+
+        Color c = _spriteRenderer.color;
+        _spriteRenderer.color = Color.yellow;
+        _spriteRenderer.DOColor(c, 0.2f);
         if (HP <= 0) DieHP();
     }
     void DieHP()
     {
         GetComponentInChildren<OrbitRenderer>().Hide();
         StopCoroutine(PingRoutine());
-        Destroy(myOverlay);
+        Destroy(_overlay.gameObject);
         Destroy(gameObject);
         //Boom
-
     }
     Vector3 DepartingPosition;
     void Depart()
     {
-        StopCoroutine(PingRoutine());
 
-        StopCoroutine(TickResources());
+        StopAllCoroutines();
+        // StopCoroutine(PingRoutine());
+
+        // StopCoroutine(TickResources());
         FTLTrail.gameObject.SetActive(true);
         DepartingPosition = transform.position;
-        CurrentStatus = Status.Departing;
+        CurrentStatus = ShipOrbitalStatus.Departing;
         GetComponentInChildren<OrbitRenderer>().Hide();
+        UnSubscribe();
 
     }
 
@@ -435,23 +462,26 @@ public class ShipController : MonoBehaviour
     public IEnumerator PhysicsRoutine(float duration)
     {
         isFrozen = true;
-        var overlay = myOverlay.GetComponent<ShipUIOverlay>();
-        Debug.Log("Before frozen routine");
-        overlay.StartCoroutine(overlay.TimerMaskCoroutine(duration));
+        // var overlay = myOverlay.GetComponent<ShipUIOverlay>();
+        // Debug.Log("Before frozen routine");
+        // overlay.StartCoroutine(overlay.TimerMaskCoroutine(duration));
         yield return new WaitForSeconds(duration);
         Debug.Log("after frozen routine");
 
         isFrozen = false;
     }
 
+    public bool isJammed = false;
     public IEnumerator InterferenceRoutine(float duration)
     {
-
-        TypeData.IntelMod *= 0.1f;
-        var overlay = myOverlay.GetComponent<ShipUIOverlay>();
-        overlay.StartCoroutine(overlay.TimerMaskCoroutine(duration));
+        isJammed = true;
+        _typeData.IntelMod *= 0.1f;
+        // var overlay = myOverlay.GetComponent<ShipUIOverlay>();
+        // overlay.StartCoroutine(overlay.TimerMaskCoroutine(duration));
         yield return new WaitForSeconds(duration);
-        TypeData.IntelMod *= 10f;
+        _typeData.IntelMod *= 10f;
+        isJammed = false;
+
     }
 
     public IEnumerator PingRoutine()
@@ -463,4 +493,13 @@ public class ShipController : MonoBehaviour
         }
     }
 
+
+}
+public enum ShipTask
+{
+    FTL, Scanning, Repairs, Fighting, Resting, Frozen
+}
+public enum ShipOrbitalStatus
+{
+    Arriving, Orbiting, Departing
 }

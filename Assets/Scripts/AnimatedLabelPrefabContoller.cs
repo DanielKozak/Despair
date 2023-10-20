@@ -2,31 +2,40 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using DG.Tweening;
 
-[RequireComponent(typeof(Text))]
 public class AnimatedLabelPrefabContoller : MonoBehaviour
 {
 
-    public Text mText;
+    [SerializeField] TextMeshProUGUI mText;
+    Camera _cam;
+    RectTransform _rect;
 
-    public void Show(Color color, string text, Vector3 position)
+    void Awake()
+    {
+        _cam = Camera.main;
+        _rect = GetComponent<RectTransform>();
+    }
+    public void ShowToProgressbar(string text, Vector3 position) => Show(text, position, ProgressManager.Instance.GetTweenTargetPosition());
+
+    public void Show(string text, Vector3 position, Color color)
+    {
+        mText.color = color;
+        ShowToProgressbar(text, position);
+    }
+    public void Show(string text, Vector3 position, Vector3 target)
     {
         mText.text = text;
-        mText.color = color;
-        transform.position = position;
-
-        Sequence s = DOTween.Sequence();
-        //s.SetEase(Ease.out);
-        s.Append(transform.DOMoveY(transform.position.y + 3f, 1f));
-        s.Insert(0, mText.DOColor(new Color(mText.color.r, mText.color.g, mText.color.b, 0.0f), 1f));
-        s.OnComplete(Kill);
-
+        _rect.position = _cam.WorldToScreenPoint(position);
+        transform.DOMove(target, 1f).OnComplete(() => Destroy(gameObject));
     }
-
-    void Kill()
+    public void ShowDefault(string text, Vector3 position)
     {
-        Destroy(gameObject);
+        mText.text = text;
+        _rect.position = _cam.WorldToScreenPoint(position);
+        Vector3 target = new Vector3(_rect.position.x, _rect.position.y + 50, _rect.position.z);
+        transform.DOMove(target, 1f).OnComplete(() => Destroy(gameObject));
     }
 
 }

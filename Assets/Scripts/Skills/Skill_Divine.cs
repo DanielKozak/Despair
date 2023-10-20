@@ -16,7 +16,7 @@ class Skill_Divine : Skill
     {
         AudioManager.PlaySound("mechanics");
 
-        target.HP += 30;
+        // target.HP += 30;
 
         InterfaceManager.Instance.ShowAnimatedLabel(GameManager.Instance.HPColor, "+30", target.transform.position);
         //InterfaceManager.Instance.ShowAnimatedLabel(GameManager.Instance.DespairColor, "+10", target.transform.position, true);

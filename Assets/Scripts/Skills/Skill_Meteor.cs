@@ -16,11 +16,11 @@ class Skill_Meteor : Skill
     {
         AudioManager.PlaySound("meteor");
 
-        target.HP -= 10;
-        target.Despair += 10;
+        // target.HP -= 10;
+        // target.Despair += 10;
 
-        InterfaceManager.Instance.ShowAnimatedLabel(GameManager.Instance.HPColor, "-10", target.transform.position);
-        InterfaceManager.Instance.ShowAnimatedLabel(GameManager.Instance.DespairColor, "+10", target.transform.position, true);
+        // InterfaceManager.Instance.ShowAnimatedLabel(GameManager.Instance.HPColor, "-10", target.transform.position);
+        // InterfaceManager.Instance.ShowAnimatedLabel(GameManager.Instance.DespairColor, "+10", target.transform.position, true);
 
 
     }

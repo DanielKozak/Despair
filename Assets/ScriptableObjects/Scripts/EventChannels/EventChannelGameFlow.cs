@@ -9,6 +9,7 @@ public class EventChannelGameFlow : ScriptableObject
     public UnityAction OnGameUnpauseEvent;
     public UnityAction OnShowMenuEvent;
     public UnityAction OnTriggerGameOverEvent;
+    public UnityAction OnTriggerColonisationEvent;
 
 
     public void RaiseOnNewGameStartEvent()
@@ -35,6 +36,11 @@ public class EventChannelGameFlow : ScriptableObject
     {
         DBG_LogManager.Instance.LogEvent(this, "OnTriggerGameOverEvent");
         OnTriggerGameOverEvent?.Invoke();
+    }
+    public void RaiseOnTriggerColonisationEvent()
+    {
+        DBG_LogManager.Instance.LogEvent(this, "OnTriggerColonisationEvent");
+        OnTriggerColonisationEvent?.Invoke();
     }
 
 }
